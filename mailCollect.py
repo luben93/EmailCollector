@@ -1,21 +1,12 @@
-#!python
+#!/usr/bin/env python
 
-__author__ = "Lucas Persson"
-__copyright__ = "Copyright 2015"
-__credits__ = "Lucas Persson"
-__license__ = "GPL"
-__version__ = "1.0"
-__maintainer__ = "Lucas Persson"
-__email__ = "luben93@gmail.com"
-
+import sys
 import urllib2
 import re
 from optparse import OptionParser
 import time
 from datetime import date, timedelta
-import sys
-
-import boto3 	# pip install boto3 
+import boto3 	# pip install boto3
 				# configure aws cli
 
 
@@ -31,7 +22,7 @@ def get_emails(s):
     return (email[0] for email in re.findall(regex, s) if not email[0].startswith('//'))
 
 #def find_emails(str):
-#	emails = re.findall(r'[\w\.-]+@[\w\.-]+', str) 
+#	emails = re.findall(r'[\w\.-]+@[\w\.-]+', str)
 #	for email in emails:
 #    	print email
 
@@ -58,9 +49,10 @@ def read_url(url,f):
 				print link
 				print e
 			else:
-				
+
 				mail = website.read()
-				for email in get_emails(mail): 
+				for email in get_emails(mail): #TODO replace get with find ???
+					#print email
 					f.write(email+'\n')
 
 
@@ -68,14 +60,26 @@ if __name__ == '__main__':
 
 
 	filename=time.strftime("Mail-%d-%m-%Y.csv")
-	url="https://haveibeenpwned.com/Pastes/Latest"
-	bucket=sys.argv[1]#input 
+
+	if len(sys.argv) == 2:
+		filename=sys.argv[1]+"-parsed-"+filename
 
 	with open(filename, 'w') as f:
-		read_url(url,f)
+	#	f.write('This is a test\n')
+		url="https://haveibeenpwned.com/Pastes/Latest"
+		if len(sys.argv) == 2:
+			print(sys.argv[1])
+			with open (sys.argv[1], "r") as myfile:
+					data=myfile.readlines()
+					for line in data:
+						for email in get_emails(line):
+							f.write(email+',\n')
+           	#read_url(url,f)
+
 	f.closed
 
 	data = open(filename, 'rb')
 	s3 = boto3.resource('s3')
-	print s3.Bucket(bucket).put_object(Key=filename, Body=data)
-	
+	print s3.Bucket('magazinosmail').put_object(Key=filename, Body=data)
+
+
